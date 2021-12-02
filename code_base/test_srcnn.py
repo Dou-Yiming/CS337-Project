@@ -84,8 +84,6 @@ def main():
     gt, input, y_masked, y, ycbcr, ycbcr_masked = load_image(args, device)
     gt.save(os.path.join(args.outputs_dir, 'gt.bmp'))
     input.save(os.path.join(args.outputs_dir, 'bicubic.bmp'))
-    import ipdb
-    ipdb.set_trace()
     with torch.no_grad():
         preds = model(y_masked).clamp(0.0, 1.0)
     psnr = calc_psnr(y, preds)

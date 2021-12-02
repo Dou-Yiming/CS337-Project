@@ -1,0 +1,10 @@
+TRAIN:
+  IMG_DIR: "./data/Urban100/"
+  DATA_DIR: "./data/dbs/"
+  DB: "Urban100_train.pkl"
+  SCALE: 2
+VAL:
+  IMG_DIR: "./data/Urban100/"
+  DATA_DIR: "./data/dbs/"
+  DB: "Urban100_val.pkl"
+  SCALE: 2

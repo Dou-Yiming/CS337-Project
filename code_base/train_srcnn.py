@@ -60,7 +60,8 @@ def main():
     model = SRCNN().to(device)
     criterion = nn.MSELoss()
     optimizer = optim.AdamW([
-        {'params': model.conv.parameters()},
+        {'params': model.conv0.parameters()},
+        {'params': model.backbone.parameters()},
         {'params': model.head.parameters(), 'lr': args.lr * 0.1}
     ], lr=args.lr)
 
