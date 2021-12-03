@@ -26,7 +26,7 @@ def parse_args():
     parser.add_argument('--outputs_dir', type=str, required=True)
     parser.add_argument('--config_path', type=str, required=True)
     parser.add_argument('--scale', type=int, default=3)
-    parser.add_argument('--lr', type=float, default=1e-5)
+    parser.add_argument('--lr', type=float, default=1e-3)
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--num_epochs', type=int, default=100)
     parser.add_argument('--num_workers', type=int, default=8)
@@ -74,10 +74,14 @@ def main():
         pin_memory=True
     )
 
-    # model = SRCNN(num_channels=3,
-    #               filters=[64, 32]).to(device)
-    model = UNet(input_channel=3,output_channel=3).to(device)
-    optimizer = optim.AdamW(model.parameters(), lr=args.lr)
+    model = SRCNN(num_channels=3).to(device)
+    optimizer = optim.AdamW([
+        {'params': model.conv1.parameters()},
+        {'params': model.conv2.parameters()},
+        {'params': model.conv3.parameters(), 'lr': args.lr * 0.1}
+    ], lr=args.lr)
+    # model = UNet(input_channel=3,output_channel=3).to(device)
+    # optimizer = optim.AdamW(model.parameters(), lr=args.lr)
     criterion = nn.MSELoss()
 
     bst = 0.0
@@ -88,8 +92,19 @@ def main():
             input = input.to(device).float()
             label = label.to(device).float()
             with torch.no_grad():
-                pred = model(input).clamp(0.0, 1.0)
+                pred,res = model(input)
+                pred=pred.clamp(0.0, 1.0)
+                res=res.clamp(0.0, 1.0)
             epoch_psnr.update(calc_psnr(pred, label), len(input))
+            
+            input_tensor = input.clone().detach()
+            input_tensor = input_tensor.to(torch.device('cpu'))
+            input_tensor = input_tensor.squeeze()
+            input_tensor = input_tensor.mul_(255).add_(0.5).clamp_(
+                0, 255).permute(1, 2, 0).type(torch.uint8).numpy()
+            input_tensor = cv2.cvtColor(input_tensor, cv2.COLOR_RGB2BGR)
+            cv2.imwrite(os.path.join(
+                args.outputs_dir, 'input_{}.png'.format(i)), input_tensor)
 
             input_tensor = pred.clone().detach()
             input_tensor = input_tensor.to(torch.device('cpu'))
@@ -98,7 +113,7 @@ def main():
                 0, 255).permute(1, 2, 0).type(torch.uint8).numpy()
             input_tensor = cv2.cvtColor(input_tensor, cv2.COLOR_RGB2BGR)
             cv2.imwrite(os.path.join(
-                args.outputs_dir, 'tmp_{}.png'.format(i)), input_tensor)
+                args.outputs_dir, 'pred_{}.png'.format(i)), input_tensor)
 
             input_tensor = label.clone().detach()
             input_tensor = input_tensor.to(torch.device('cpu'))
@@ -107,7 +122,16 @@ def main():
                 0, 255).permute(1, 2, 0).type(torch.uint8).numpy()
             input_tensor = cv2.cvtColor(input_tensor, cv2.COLOR_RGB2BGR)
             cv2.imwrite(os.path.join(
-                args.outputs_dir, 'tmp_gt_{}.png'.format(i)), input_tensor)
+                args.outputs_dir, 'gt_{}.png'.format(i)), input_tensor)
+            
+            input_tensor = res.clone().detach()
+            input_tensor = input_tensor.to(torch.device('cpu'))
+            input_tensor = input_tensor.squeeze()
+            input_tensor = input_tensor.mul_(255).add_(0.5).clamp_(
+                0, 255).permute(1, 2, 0).type(torch.uint8).numpy()
+            input_tensor = cv2.cvtColor(input_tensor, cv2.COLOR_RGB2BGR)
+            cv2.imwrite(os.path.join(
+                args.outputs_dir, 'res_{}.png'.format(i)), input_tensor)
 
         print("avg psnr: {:.2f}".format(epoch_psnr.avg))
         if epoch_psnr.avg > bst:
@@ -128,7 +152,7 @@ def main():
             for input, label in train_loader:
                 input = input.to(device).float()
                 label = label.to(device).float()
-                pred = model(input)
+                pred,_ = model(input)
 
                 loss = criterion(pred, label)
                 epoch_loss.update(loss.item(), len(input))

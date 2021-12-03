@@ -12,6 +12,7 @@ from tqdm import tqdm
 from easydict import EasyDict as edict
 
 from models.srcnn import SRCNN
+from models.UNet import UNet
 from lib.datasets import SRCNN_train_set, SRCNN_eval_set
 from lib.metrics import calc_psnr
 from utils.meters import AverageMeter
