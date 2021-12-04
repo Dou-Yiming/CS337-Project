@@ -15,7 +15,7 @@ from timm.data.constants import \
 
 from timm.data import create_transform
 
-from masking_generator import RandomMaskingGenerator
+from masking_generator import RandomMaskingGenerator,FFTMaskingGenerator
 from dataset_folder import ImageFolder
 
 
@@ -26,24 +26,34 @@ class DataAugmentationForMAE(object):
         std = IMAGENET_INCEPTION_STD if not imagenet_default_mean_and_std else IMAGENET_DEFAULT_STD
 
         self.transform = transforms.Compose([
-            transforms.RandomResizedCrop(args.input_size),
+            # transforms.RandomResizedCrop(args.input_size),
+            transforms.CenterCrop(args.input_size),
             transforms.ToTensor(),
             transforms.Normalize(
                 mean=torch.tensor(mean),
                 std=torch.tensor(std))
         ])
 
-        self.masked_position_generator = RandomMaskingGenerator(
-            args.window_size, args.mask_ratio
-        )
+        if args.mask_strategy=='random':
+            self.masked_position_generator = RandomMaskingGenerator(
+                args.window_size, args.mask_ratio
+            )
+        elif args.mask_strategy=='FFT':
+            self.masked_position_generator = FFTMaskingGenerator(
+                args.window_size, args.mask_ratio
+            )
 
     def __call__(self, image):
-        return self.transform(image), self.masked_position_generator()
+        img = self.transform(image)
+        mask=self.masked_position_generator(img)
+        return img, mask
+        # return self.transform(image), self.masked_position_generator()
 
     def __repr__(self):
         repr = "(DataAugmentationForBEiT,\n"
         repr += "  transform = %s,\n" % str(self.transform)
-        repr += "  Masked position generator = %s,\n" % str(self.masked_position_generator)
+        repr += "  Masked position generator = %s,\n" % str(
+            self.masked_position_generator)
         repr += ")"
         return repr
 
@@ -69,7 +79,8 @@ def build_dataset(is_train, args):
     print("---------------------------")
 
     if args.data_set == 'CIFAR':
-        dataset = datasets.CIFAR100(args.data_path, train=is_train, transform=transform)
+        dataset = datasets.CIFAR100(
+            args.data_path, train=is_train, transform=transform)
         nb_classes = 100
     elif args.data_set == 'IMNET':
         root = os.path.join(args.data_path, 'train' if is_train else 'val')
@@ -124,7 +135,8 @@ def build_transform(is_train, args):
                 args.crop_pct = 1.0
         size = int(args.input_size / args.crop_pct)
         t.append(
-            transforms.Resize(size, interpolation=3),  # to maintain same ratio w.r.t. 224 images
+            # to maintain same ratio w.r.t. 224 images
+            transforms.Resize(size, interpolation=3),
         )
         t.append(transforms.CenterCrop(args.input_size))
 
