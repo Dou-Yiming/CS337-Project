@@ -98,7 +98,7 @@ def main():
                       ).transpose([1, 2, 0])
     input = np.clip(ycbcr2rgb(input), 0.0, 255.0).astype(np.uint8)
     input = pil_image.fromarray(input)
-    input.save(os.path.join(args.outputs_dir, 'masked_input.bmp'))
+    # input.save(os.path.join(args.outputs_dir, 'masked_input.bmp'))
     
     output = np.array([preds, ycbcr_masked[..., 1], ycbcr_masked[..., 2]]
                       ).transpose([1, 2, 0])

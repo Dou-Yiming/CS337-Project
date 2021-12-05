@@ -43,10 +43,11 @@ class SRCNN_eval_set(Dataset):
 
 
 class train_set(Dataset):
-    def __init__(self, config):
+    def __init__(self, args, config):
         super(train_set, self).__init__()
         self.data_dir = config.TRAIN.DATA_DIR
         self.img_dir = config.TRAIN.IMG_DIR
+        self.args = args
         self.config = config
         self.db = pickle.load(open(osp.join(
             self.data_dir, self.config.TRAIN.DB
@@ -59,22 +60,28 @@ class train_set(Dataset):
         file_name = self.db[index]['file_name']
         gt = cv2.imread(osp.join(self.img_dir, file_name))
         gt = cv2.cvtColor(gt, cv2.COLOR_BGR2RGB)
-        height, width = gt.shape[0:2]
-        # BICUBIC
-        input = cv2.resize(gt, (width//self.config.TRAIN.SCALE,
-                                height//self.config.TRAIN.SCALE),
-                           interpolation=cv2.INTER_CUBIC)
-        input = cv2.resize(input, (width, height),
-                           interpolation=cv2.INTER_CUBIC)
+        if self.args.down_sample == 'delaunay':
+            input = cv2.imread(
+                osp.join('./data/delaunay/{}/'.format(self.args.point_num), file_name))
+            input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
+        elif self.args.down_sample == 'bicubic':
+            height, width = gt.shape[0:2]
+            input = cv2.resize(gt, (width//self.args.scale,
+                                    height//self.args.scale),
+                               interpolation=cv2.INTER_CUBIC)
+            input = cv2.resize(input, (width, height),
+                               interpolation=cv2.INTER_CUBIC)
+            input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
         tran = transforms.ToTensor()
         return tran(input), tran(gt)
 
 
 class val_set(Dataset):
-    def __init__(self, config):
+    def __init__(self, args, config):
         super(val_set, self).__init__()
         self.data_dir = config.VAL.DATA_DIR
         self.img_dir = config.VAL.IMG_DIR
+        self.args = args
         self.config = config
         self.db = pickle.load(open(osp.join(
             self.data_dir, self.config.VAL.DB
@@ -87,12 +94,16 @@ class val_set(Dataset):
         file_name = self.db[index]['file_name']
         gt = cv2.imread(osp.join(self.img_dir, file_name))
         gt = cv2.cvtColor(gt, cv2.COLOR_BGR2RGB)
-        height, width = gt.shape[0:2]
-        # BICUBIC
-        input = cv2.resize(gt, (width//self.config.VAL.SCALE,
-                                height//self.config.VAL.SCALE),
-                           interpolation=cv2.INTER_CUBIC)
-        input = cv2.resize(input, (width, height),
-                           interpolation=cv2.INTER_CUBIC)
+        if self.args.down_sample == 'delaunay':
+            input = cv2.imread(
+                osp.join('./data/delaunay/{}/'.format(self.args.point_num), file_name))
+        elif self.args.down_sample == 'bicubic':
+            height, width = gt.shape[0:2]
+            input = cv2.resize(gt, (width//self.args.scale,
+                                    height//self.args.scale),
+                               interpolation=cv2.INTER_CUBIC)
+            input = cv2.resize(input, (width, height),
+                               interpolation=cv2.INTER_CUBIC)
+        input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
         tran = transforms.ToTensor()
         return tran(input), tran(gt)

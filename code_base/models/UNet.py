@@ -47,10 +47,12 @@ class Up(nn.Module):
 
         # if bilinear, use the normal convolutions to reduce the number of channels
         if bilinear:
-            self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+            self.up = nn.Upsample(
+                scale_factor=2, mode='bilinear', align_corners=True)
             self.conv = DoubleConv(in_channels, out_channels, in_channels // 2)
         else:
-            self.up = nn.ConvTranspose2d(in_channels, in_channels // 2, kernel_size=2, stride=2)
+            self.up = nn.ConvTranspose2d(
+                in_channels, in_channels // 2, kernel_size=2, stride=2)
             self.conv = DoubleConv(in_channels, out_channels)
 
     def forward(self, x1, x2):
@@ -76,6 +78,7 @@ class OutConv(nn.Module):
     def forward(self, x):
         return self.conv(x)
 
+
 class UNet(nn.Module):
     def __init__(self, input_channel, output_channel, bilinear=True):
         super(UNet, self).__init__()
@@ -95,7 +98,11 @@ class UNet(nn.Module):
         self.up4 = Up(32, 16, bilinear)
         self.outc = OutConv(16, output_channel)
 
+        self.relu = nn.ReLU(inplace=True)
+        self.leaky_relu=nn.LeakyReLU(inplace=True)
+
     def forward(self, x):
+        input = x
         x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
@@ -106,4 +113,4 @@ class UNet(nn.Module):
         x = self.up3(x, x2)
         x = self.up4(x, x1)
         output = self.outc(x)
-        return output
+        return output+input

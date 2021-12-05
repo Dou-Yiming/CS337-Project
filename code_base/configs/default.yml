@@ -1,11 +1,8 @@
 TRAIN:
-  IMG_DIR: "./data/Set5/"
+  IMG_DIR: "./data/union/"
   DATA_DIR: "./data/dbs/"
-  DB: "Set5_val.pkl"
-  # DB: "Urban100_train.pkl"
-  SCALE: 5
+  DB: "union_train.pkl"
 VAL:
   IMG_DIR: "./data/Set5/"
   DATA_DIR: "./data/dbs/"
   DB: "Set5_val.pkl"
-  SCALE: 5
