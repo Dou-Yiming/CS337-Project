@@ -142,12 +142,12 @@ def main(args):
         rec_img = rearrange(rec_img, 'b (h w) (p1 p2) c -> b c (h p1) (w p2)',
                             p1=patch_size[0], p2=patch_size[1], h=14, w=14)
         img = ToPILImage()(rec_img[0, :].clip(0, 0.996))
-        img.save(f"{args.save_path}/rec_img.jpg")
+        img.save(f"{args.save_path}/rec_img_{args.mask_ratio}.jpg")
 
         # save random mask img
         img_mask = rec_img * mask
         img = ToPILImage()(img_mask[0, :])
-        img.save(f"{args.save_path}/mask_img.jpg")
+        img.save(f"{args.save_path}/mask_img_{args.mask_ratio}.jpg")
 
 
 if __name__ == '__main__':

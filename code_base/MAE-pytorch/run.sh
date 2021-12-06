@@ -8,4 +8,4 @@ MODEL_PATH='weights/pretrain_mae_vit_base_mask_0.75_400e.pth'
 
 # Now, it only supports pretrained models with normalized pixel targets
 python run_mae_vis.py ${IMAGE_PATH} ${OUTPUT_DIR} ${MODEL_PATH} \
-    --mask_ratio 0.75 --mask_strategy random
+    --mask_ratio 0.5 --mask_strategy FFT

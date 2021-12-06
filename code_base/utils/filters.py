@@ -193,19 +193,19 @@ if __name__ == "__main__":
     image_high_pass_filtering1 = high_pass_filtering(image, 10, 1)
     image_bandpass_filtering5 = bandpass_filter(image, 30, 56, 1)
     image_bandstop_filtering5 = bandstop_filter(image, 30, 56, 1)
-    plt.subplot(241), plt.imshow(image, 'gray'), plt.title(
-        "原图"), plt.xticks([]), plt.yticks([])
+    plt.subplot(121), plt.imshow(image, 'gray'), plt.title(
+        "Origin-Image"), plt.xticks([]), plt.yticks([])
     # plt.subplot(334), plt.imshow(image_noise, 'gray'), plt.title("添加了椒盐噪声的图像"), plt.xticks([]), plt.yticks([])
-    plt.subplot(242), plt.imshow(image_low_pass_filtering5, 'gray'), plt.title(
-        "半径为50像素的低通滤波"), plt.xticks([]), plt.yticks([])
-    plt.subplot(246), plt.imshow(image_low_pass_filtering1, 'gray'), plt.title(
-        "半径为10像素的低通滤波"), plt.xticks([]), plt.yticks([])
-    plt.subplot(243), plt.imshow(image_high_pass_filtering5, 'gray'), plt.title(
-        "半径为50像素的高通滤波"), plt.xticks([]), plt.yticks([])
-    plt.subplot(247), plt.imshow(image_high_pass_filtering1, 'gray'), plt.title(
-        "半径为10像素的高通滤波"), plt.xticks([]), plt.yticks([])
-    plt.subplot(244), plt.imshow(image_bandpass_filtering5, 'gray'), plt.title(
-        "带通滤波"), plt.xticks([]), plt.yticks([])
-    plt.subplot(248), plt.imshow(image_bandstop_filtering5, 'gray'), plt.title(
-        "带阻滤波"), plt.xticks([]), plt.yticks([])
+    # plt.subplot(242), plt.imshow(image_low_pass_filtering5, 'gray'), plt.title(
+    #     "半径为50像素的低通滤波"), plt.xticks([]), plt.yticks([])
+    # plt.subplot(246), plt.imshow(image_low_pass_filtering1, 'gray'), plt.title(
+    #     "半径为10像素的低通滤波"), plt.xticks([]), plt.yticks([])
+    # plt.subplot(243), plt.imshow(image_high_pass_filtering5, 'gray'), plt.title(
+        # "半径为50像素的高通滤波"), plt.xticks([]), plt.yticks([])
+    plt.subplot(122), plt.imshow(image_high_pass_filtering1, 'gray'), plt.title(
+        "High-Pass Filtered Image"), plt.xticks([]), plt.yticks([])
+    # plt.subplot(244), plt.imshow(image_bandpass_filtering5, 'gray'), plt.title(
+    #     "带通滤波"), plt.xticks([]), plt.yticks([])
+    # plt.subplot(248), plt.imshow(image_bandstop_filtering5, 'gray'), plt.title(
+    #     "带阻滤波"), plt.xticks([]), plt.yticks([])
     plt.show()
