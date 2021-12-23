@@ -3,7 +3,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import math
 
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""
@@ -100,6 +100,14 @@ class UNet(nn.Module):
 
         self.relu = nn.ReLU(inplace=True)
         self.leaky_relu=nn.LeakyReLU(inplace=True)
+        
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(-math.sqrt(0.01 / n), math.sqrt(0.5 / n))
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
 
     def forward(self, x):
         input = x
@@ -113,4 +121,4 @@ class UNet(nn.Module):
         x = self.up3(x, x2)
         x = self.up4(x, x1)
         output = self.outc(x)
-        return output+input
+        return output

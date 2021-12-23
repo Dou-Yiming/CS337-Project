@@ -7,6 +7,7 @@ import cv2
 import torch
 from torch import nn
 import torch.optim as optim
+import torch.optim.lr_scheduler as lr_scheduler
 import torch.backends.cudnn as cudnn
 from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
@@ -49,6 +50,7 @@ def get_config(args):
 def set_device():
     return torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+
 def save_img(input, name, args):
     input_tensor = input.clone().detach()
     input_tensor = input_tensor.to(torch.device('cpu'))
@@ -59,18 +61,15 @@ def save_img(input, name, args):
     cv2.imwrite(os.path.join(
         args.outputs_dir, '{}'.format(name)), input_tensor)
 
+
 def main():
     args = parse_args()
     cfg = get_config(args=args)
 
     args.outputs_dir = os.path.join(args.outputs_dir, '{}'.format(
         args.down_sample))
-    if args.down_sample == 'delaunay':
-        args.outputs_dir = os.path.join(
-            args.outputs_dir, '{}'.format(args.point_num))
-    elif args.down_sample == 'bicubic':
-        args.outputs_dir = os.path.join(
-            args.outputs_dir, 'x_{}'.format(args.scale))
+    args.outputs_dir = os.path.join(
+        args.outputs_dir, 'x_{}'.format(args.scale))
     if not os.path.exists(args.outputs_dir):
         os.makedirs(args.outputs_dir)
 
@@ -95,32 +94,46 @@ def main():
     )
     if args.model == 'UNet':
         model = UNet(input_channel=3, output_channel=3).to(device)
-        optimizer = optim.AdamW(model.parameters(), lr=args.lr)
+        optimizer = optim.SGD(model.parameters(), lr=args.lr,
+                              weight_decay=1e-5, momentum=0.9)
     elif args.model == 'SRCNN':
         model = SRCNN(num_channels=3).to(device)
-        optimizer = optim.AdamW([
+        optimizer = optim.SGD([
             {'params': model.conv1.parameters()},
             {'params': model.conv2.parameters()},
+            {'params': model.conv_block.parameters()},
             {'params': model.conv3.parameters(), 'lr': args.lr * 0.1}
-        ], lr=args.lr)
+        ], lr=args.lr, weight_decay=1e-4, momentum=0.9)
+    scheduler = lr_scheduler.CosineAnnealingWarmRestarts(
+        optimizer, T_0=6080, T_mult=2, eta_min=1e-3
+    )
 
     criterion = nn.MSELoss()
 
     bst = 0.0
     for epoch in range(args.num_epochs):
         model.eval()
-        epoch_psnr = AverageMeter()
+        input_psnr = AverageMeter()
+        pred_psnr = AverageMeter()
         for i, (input, label) in tqdm(enumerate(val_loader), leave=False):
             input = input.to(device).float()
             label = label.to(device).float()
+            label -= input
             with torch.no_grad():
                 pred = model(input)
                 pred = pred.clamp(0.0, 1.0)
-            epoch_psnr.update(calc_psnr(pred, label), len(input))
-            
-        print("avg psnr: {:.2f}".format(epoch_psnr.avg))
-        if epoch_psnr.avg > bst:
-            bst = epoch_psnr.avg
+            input_psnr.update(calc_psnr(input, label+input), len(input))
+            pred_psnr.update(calc_psnr(pred+input, label+input), len(input))
+            save_img(input, 'input_{}.png'.format(i), args)
+            save_img(pred+input, 'pred_{}.png'.format(i), args)
+            save_img(label+input, 'gt_{}.png'.format(i), args)
+            save_img(pred, 'pred_res_{}.png'.format(i), args)
+            save_img(label, 'gt_res_{}.png'.format(i), args)
+
+        print("input psnr: {:.2f}, pred psnr: {:.2f}".format(
+            input_psnr.avg, pred_psnr.avg))
+        if pred_psnr.avg > bst:
+            bst = pred_psnr.avg
             best_weights = copy.deepcopy(model.state_dict())
             print('best psnr: {:.2f}'.format(bst))
             torch.save(best_weights, os.path.join(
@@ -140,16 +153,20 @@ def main():
             for input, label in train_loader:
                 input = input.to(device).float()
                 label = label.to(device).float()
+                label -= input
                 pred = model(input)
 
                 loss = criterion(pred, label)
+                nn.utils.clip_grad_norm_(model.parameters(), max_norm=10, norm_type=2)
                 epoch_loss.update(loss.item(), len(input))
 
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+                scheduler.step()
 
-                t.set_postfix(loss='{:.6f}'.format(epoch_loss.avg))
+                t.set_postfix(loss='{:.6f}'.format(epoch_loss.avg), lr='{:.2e}'.format(
+                    optimizer.state_dict()['param_groups'][0]['lr']))
                 t.update(len(input))
 
 

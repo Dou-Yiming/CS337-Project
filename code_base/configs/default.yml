@@ -3,6 +3,6 @@ TRAIN:
   DATA_DIR: "./data/dbs/"
   DB: "union_train.pkl"
 VAL:
-  IMG_DIR: "./data/Set5/"
+  IMG_DIR: "./data/union/"
   DATA_DIR: "./data/dbs/"
-  DB: "Set5_val.pkl"
+  DB: "union_val.pkl"

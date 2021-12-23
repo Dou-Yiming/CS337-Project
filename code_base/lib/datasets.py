@@ -62,7 +62,7 @@ class train_set(Dataset):
         gt = cv2.cvtColor(gt, cv2.COLOR_BGR2RGB)
         if self.args.down_sample == 'delaunay':
             input = cv2.imread(
-                osp.join('./data/delaunay/{}/'.format(self.args.point_num), file_name))
+                osp.join('./data/delaunay/x{}/'.format(self.args.scale), file_name))
             input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
         elif self.args.down_sample == 'bicubic':
             height, width = gt.shape[0:2]
@@ -96,7 +96,7 @@ class val_set(Dataset):
         gt = cv2.cvtColor(gt, cv2.COLOR_BGR2RGB)
         if self.args.down_sample == 'delaunay':
             input = cv2.imread(
-                osp.join('./data/delaunay/{}/'.format(self.args.point_num), file_name))
+                osp.join('./data/delaunay/x{}/'.format(self.args.scale), file_name))
         elif self.args.down_sample == 'bicubic':
             height, width = gt.shape[0:2]
             input = cv2.resize(gt, (width//self.args.scale,
