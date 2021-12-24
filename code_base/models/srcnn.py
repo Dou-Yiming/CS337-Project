@@ -6,10 +6,11 @@ import math
 class SRCNN(nn.Module):
     def __init__(self, num_channels=3):
         super(SRCNN, self).__init__()
-        self.conv1 = nn.Conv2d(num_channels, 64, kernel_size=9, padding=9 // 2)
-        self.conv2 = nn.Conv2d(64, 16, kernel_size=5, padding=5 // 2)
+        self.conv1 = nn.Conv2d(num_channels, 32, kernel_size=9, padding=9 // 2)
+        self.conv2 = nn.Conv2d(32, 16, kernel_size=5, padding=5 // 2)
         self.conv3 = nn.Conv2d(16, num_channels, kernel_size=3, padding=3 // 2)
-        
+        self.conv4 = nn.Conv2d(3, 3, 1)
+
         self.relu = nn.ReLU(inplace=True)
         self.leaky_relu = nn.LeakyReLU(inplace=True)
         self.conv_block = nn.ModuleList([
@@ -25,8 +26,9 @@ class SRCNN(nn.Module):
 
     def forward(self, x):
         h = self.leaky_relu(self.conv1(x))
-        for conv in self.conv_block:
-            h = self.leaky_relu(conv(h)+h)
+        # for conv in self.conv_block:
+        #     h = self.leaky_relu(conv(h)+h)
         h = self.leaky_relu(self.conv2(h))
-        output = self.conv3(h)
+        h = self.conv3(h)
+        output = h+x
         return output

@@ -1,10 +1,12 @@
 import pickle
 import os.path as osp
 import cv2
+import random
 import h5py
 import numpy as np
 from torch.utils.data import Dataset
 from torchvision import transforms
+import imutils
 
 from utils.filters import high_pass_filtering
 
@@ -59,11 +61,9 @@ class train_set(Dataset):
     def __getitem__(self, index):
         file_name = self.db[index]['file_name']
         gt = cv2.imread(osp.join(self.img_dir, file_name))
-        gt = cv2.cvtColor(gt, cv2.COLOR_BGR2RGB)
         if self.args.down_sample == 'delaunay':
             input = cv2.imread(
-                osp.join('./data/delaunay/x{}/'.format(self.args.scale), file_name))
-            input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
+                osp.join('./data/delaunay/{}/x{}/'.format(self.args.sample_method, self.args.scale), file_name))
         elif self.args.down_sample == 'bicubic':
             height, width = gt.shape[0:2]
             input = cv2.resize(gt, (width//self.args.scale,
@@ -72,6 +72,20 @@ class train_set(Dataset):
             input = cv2.resize(input, (width, height),
                                interpolation=cv2.INTER_CUBIC)
             input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
+
+        # shuffle RGB channels
+        channels = [0, 1, 2]
+        random.shuffle(channels)
+        gt = np.array([gt[:, :, channels[0]].transpose(), gt[:, :, channels[1]].transpose(
+        ), gt[:, :, channels[2]].transpose()]).swapaxes(0, 2)
+        input = np.array([input[:, :, channels[0]].transpose(), input[:, :, channels[1]].transpose(
+        ), input[:, :, channels[2]].transpose()]).swapaxes(0, 2)
+        # random flip
+        v = random.choice([-2, -1, 0, 1])
+        if v != -2:
+            gt = cv2.flip(gt, v)
+            input = cv2.flip(input, v)
+        # to tensor
         tran = transforms.ToTensor()
         return tran(input), tran(gt)
 
@@ -93,10 +107,9 @@ class val_set(Dataset):
     def __getitem__(self, index):
         file_name = self.db[index]['file_name']
         gt = cv2.imread(osp.join(self.img_dir, file_name))
-        gt = cv2.cvtColor(gt, cv2.COLOR_BGR2RGB)
         if self.args.down_sample == 'delaunay':
             input = cv2.imread(
-                osp.join('./data/delaunay/x{}/'.format(self.args.scale), file_name))
+                osp.join('./data/delaunay/{}/x{}/'.format(self.args.sample_method, self.args.scale), file_name))
         elif self.args.down_sample == 'bicubic':
             height, width = gt.shape[0:2]
             input = cv2.resize(gt, (width//self.args.scale,
@@ -104,6 +117,7 @@ class val_set(Dataset):
                                interpolation=cv2.INTER_CUBIC)
             input = cv2.resize(input, (width, height),
                                interpolation=cv2.INTER_CUBIC)
+        gt = cv2.cvtColor(gt, cv2.COLOR_BGR2RGB)
         input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
         tran = transforms.ToTensor()
         return tran(input), tran(gt)

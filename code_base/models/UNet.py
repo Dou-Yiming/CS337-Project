@@ -80,7 +80,7 @@ class OutConv(nn.Module):
 
 
 class UNet(nn.Module):
-    def __init__(self, input_channel, output_channel, bilinear=True):
+    def __init__(self, input_channel=3, output_channel=3, bilinear=True):
         super(UNet, self).__init__()
         self.n_channels = input_channel
         self.n_classes = output_channel
@@ -104,7 +104,7 @@ class UNet(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(-math.sqrt(0.01 / n), math.sqrt(0.5 / n))
+                m.weight.data.normal_(0., math.sqrt(0.1 / n))
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()

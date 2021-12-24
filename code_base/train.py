@@ -7,19 +7,27 @@ import cv2
 import torch
 from torch import nn
 import torch.optim as optim
-import torch.optim.lr_scheduler as lr_scheduler
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts as CAWR
 import torch.backends.cudnn as cudnn
 from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
 from easydict import EasyDict as edict
 
 from models.srcnn import SRCNN
+from models.UNet import UNet
+from models.drrn import DRRN
+
 from lib.datasets import train_set, val_set
 from lib.metrics import calc_psnr
 from utils.meters import AverageMeter
-from models.UNet import UNet
 
 cudnn.benchmark = True
+
+model_dict = {
+    'UNet': UNet,
+    'DRRN': DRRN,
+    'SRCNN': SRCNN
+}
 
 
 def parse_args():
@@ -27,14 +35,15 @@ def parse_args():
     parser.add_argument('--outputs_dir', type=str, required=True)
     parser.add_argument('--config_path', type=str, required=True)
     parser.add_argument('--lr', type=float, default=1e-3)
-    parser.add_argument('--batch_size', type=int, default=16)
+    parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--num_epochs', type=int, default=100)
-    parser.add_argument('--num_workers', type=int, default=8)
+    parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--seed', type=int, default=42)
-    parser.add_argument('--model', type=str, default='UNet')
+    parser.add_argument('--model', type=str, default='DRRN')
     parser.add_argument('--down_sample', type=str, default='delaunay')
-    parser.add_argument('--point_num', type=int, default=10000)  # for delaunay
-    parser.add_argument('--scale', type=int, default=3)  # for BICUBIC
+    parser.add_argument('--ckpt', type=str, default=None)
+    parser.add_argument('--sample_method', type=str, default='FFT')
+    parser.add_argument('--scale', type=int, default=3)
 
     args = parser.parse_args()
     return args
@@ -62,20 +71,7 @@ def save_img(input, name, args):
         args.outputs_dir, '{}'.format(name)), input_tensor)
 
 
-def main():
-    args = parse_args()
-    cfg = get_config(args=args)
-
-    args.outputs_dir = os.path.join(args.outputs_dir, '{}'.format(
-        args.down_sample))
-    args.outputs_dir = os.path.join(
-        args.outputs_dir, 'x_{}'.format(args.scale))
-    if not os.path.exists(args.outputs_dir):
-        os.makedirs(args.outputs_dir)
-
-    device = set_device()
-    torch.manual_seed(args.seed)
-
+def load_dataset(args, cfg):
     train = train_set(args, cfg)
     val = val_set(args, cfg)
     train_loader = DataLoader(
@@ -92,82 +88,102 @@ def main():
         num_workers=args.num_workers,
         pin_memory=True
     )
-    if args.model == 'UNet':
-        model = UNet(input_channel=3, output_channel=3).to(device)
-        optimizer = optim.SGD(model.parameters(), lr=args.lr,
-                              weight_decay=1e-5, momentum=0.9)
-    elif args.model == 'SRCNN':
-        model = SRCNN(num_channels=3).to(device)
-        optimizer = optim.SGD([
-            {'params': model.conv1.parameters()},
-            {'params': model.conv2.parameters()},
-            {'params': model.conv_block.parameters()},
-            {'params': model.conv3.parameters(), 'lr': args.lr * 0.1}
-        ], lr=args.lr, weight_decay=1e-4, momentum=0.9)
-    scheduler = lr_scheduler.CosineAnnealingWarmRestarts(
-        optimizer, T_0=6080, T_mult=2, eta_min=1e-3
-    )
+    return train_loader, val_loader, train, val
 
+
+def eval_epoch(model, val_loader, device, args, bst):
+    res = {}
+    model.eval()
+    input_psnr = AverageMeter()
+    pred_psnr = AverageMeter()
+    for i, (input, label) in tqdm(enumerate(val_loader), leave=False):
+        input = input.to(device).float()
+        label = label.to(device).float()
+        res = label-input
+        with torch.no_grad():
+            pred = model(input)
+            pred = pred.clamp(0.0, 1.0)
+            if i == 9:
+                save_img(input, 'input_{}.png'.format(i), args)
+                save_img(pred, 'pred_{}.png'.format(i), args)
+                save_img(label, 'gt_{}.png'.format(i), args)
+                save_img(pred-input, 'pred_res_{}.png'.format(i), args)
+                save_img(res, 'gt_res_{}.png'.format(i), args)
+        input_psnr.update(calc_psnr(input, label), len(input))
+        pred_psnr.update(calc_psnr(pred, label), len(input))
+
+    print("input psnr: {:.2f}, pred psnr: {:.2f}".format(
+        input_psnr.avg, pred_psnr.avg))
+    if pred_psnr.avg > bst:
+        bst = pred_psnr.avg
+        best_weights = copy.deepcopy(model.state_dict())
+        print('best psnr: {:.2f}'.format(bst))
+        torch.save(best_weights, os.path.join(
+            args.outputs_dir, 'best.pth'))
+    return bst
+
+
+def train_epoch(model, train, train_loader, device, epoch, args, criterion, optimizer, scheduler):
+    model.train()
+    epoch_loss = AverageMeter()
+
+    with tqdm(total=(len(train) - len(train) % args.batch_size),
+              leave=False) as t:
+        t.set_description(
+            'epoch: {}/{}'.format(epoch, args.num_epochs - 1))
+
+        for input, label in train_loader:
+            input = input.to(device).float()
+            label = label.to(device).float()
+            pred = model(input)
+
+            loss = criterion(pred, label)
+            nn.utils.clip_grad_norm_(
+                model.parameters(), max_norm=10, norm_type=2)
+            epoch_loss.update(loss.item(), len(input))
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            scheduler.step()
+
+            t.set_postfix(loss='{:.6f}'.format(epoch_loss.avg), lr='{:.2e}'.format(
+                optimizer.state_dict()['param_groups'][0]['lr']))
+            t.update(len(input))
+
+
+def main():
+    args = parse_args()
+    cfg = get_config(args=args)
+    # set exp dir
+    args.outputs_dir = os.path.join(
+        args.outputs_dir, args.sample_method, '{}'.format(args.model))
+    args.outputs_dir = os.path.join(
+        args.outputs_dir, 'x_{}'.format(args.scale))
+    if not os.path.exists(args.outputs_dir):
+        os.makedirs(args.outputs_dir)
+    # set device, seed
+    device = set_device()
+    torch.manual_seed(args.seed)
+    # load dataset
+    train_loader, val_loader, train, val = load_dataset(args, cfg)
+    # set model
+    model = model_dict[str(args.model)]().to(device)
+    if not args.ckpt == None:
+        print('loading checkpoint from {}'.format(args.ckpt))
+        ckpt = torch.load(args.ckpt)
+        model.load_state_dict(ckpt)
+    optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
+    scheduler = CAWR(optimizer, T_0=2*len(train),
+                     T_mult=2, eta_min=0.1*args.lr)
+    # set loss function
     criterion = nn.MSELoss()
 
     bst = 0.0
     for epoch in range(args.num_epochs):
-        model.eval()
-        input_psnr = AverageMeter()
-        pred_psnr = AverageMeter()
-        for i, (input, label) in tqdm(enumerate(val_loader), leave=False):
-            input = input.to(device).float()
-            label = label.to(device).float()
-            label -= input
-            with torch.no_grad():
-                pred = model(input)
-                pred = pred.clamp(0.0, 1.0)
-            input_psnr.update(calc_psnr(input, label+input), len(input))
-            pred_psnr.update(calc_psnr(pred+input, label+input), len(input))
-            save_img(input, 'input_{}.png'.format(i), args)
-            save_img(pred+input, 'pred_{}.png'.format(i), args)
-            save_img(label+input, 'gt_{}.png'.format(i), args)
-            save_img(pred, 'pred_res_{}.png'.format(i), args)
-            save_img(label, 'gt_res_{}.png'.format(i), args)
-
-        print("input psnr: {:.2f}, pred psnr: {:.2f}".format(
-            input_psnr.avg, pred_psnr.avg))
-        if pred_psnr.avg > bst:
-            bst = pred_psnr.avg
-            best_weights = copy.deepcopy(model.state_dict())
-            print('best psnr: {:.2f}'.format(bst))
-            torch.save(best_weights, os.path.join(
-                args.outputs_dir, 'best.pth'))
-            save_img(input, 'input_{}.png'.format(i), args)
-            save_img(pred, 'pred_{}.png'.format(i), args)
-            save_img(label, 'gt_{}.png'.format(i), args)
-
-        model.train()
-        epoch_loss = AverageMeter()
-
-        with tqdm(total=(len(train) - len(train) % args.batch_size),
-                  leave=False) as t:
-            t.set_description(
-                'epoch: {}/{}'.format(epoch, args.num_epochs - 1))
-
-            for input, label in train_loader:
-                input = input.to(device).float()
-                label = label.to(device).float()
-                label -= input
-                pred = model(input)
-
-                loss = criterion(pred, label)
-                nn.utils.clip_grad_norm_(model.parameters(), max_norm=10, norm_type=2)
-                epoch_loss.update(loss.item(), len(input))
-
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-                scheduler.step()
-
-                t.set_postfix(loss='{:.6f}'.format(epoch_loss.avg), lr='{:.2e}'.format(
-                    optimizer.state_dict()['param_groups'][0]['lr']))
-                t.update(len(input))
+        bst = eval_epoch(model, val_loader, device, args, bst)
+        train_epoch(model, train, train_loader, device, epoch,
+                    args, criterion, optimizer, scheduler)
 
 
 if __name__ == "__main__":
