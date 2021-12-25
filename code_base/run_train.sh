@@ -1,10 +1,11 @@
-CUDA_VISIBLE_DEVICES=1 python train.py --outputs_dir "exp/" \
+CUDA_VISIBLE_DEVICES=7 python train.py --outputs_dir "exp/" \
     --config_path "configs/default.yml" \
-    --scale 10 \
-    --lr 1e-4 \
+    --lr 1e-3 \
     --batch_size 1 \
     --num_epochs 1000 \
     --num_workers 0 \
     --down_sample delaunay \
+    --scale 3 \
     --model DRRN \
-    --ckpt exp/DRRN/delaunay/x_10/best.pth
+    --sample_method random \
+    --ckpt exp/random/DRRN/x_3/best.pth
