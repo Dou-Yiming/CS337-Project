@@ -58,7 +58,7 @@ Some of the code used in this project are obtained from the following resources,
 
 Group Members:
 
-- [Yiming Dou]([Dou-Yiming (Yiming Dou) (github.com)](https://github.com/Dou-Yiming))
-- [Qing Yang]([hushyangqing (Qing Yang) (github.com)](https://github.com/hushyangqing))
+- [Yiming Dou](https://github.com/Dou-Yiming)
+- [Qing Yang](https://github.com/hushyangqing)
 
-Mentor: [Tianchen Xu]([StarsX (Tianchen Xu) (github.com)](https://github.com/StarsX))
+Mentor: [Tianchen Xu](https://github.com/StarsX)
