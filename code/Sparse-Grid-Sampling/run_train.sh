@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=7 python train.py --outputs_dir "exp/" \
+CUDA_VISIBLE_DEVICES=0 python train.py --outputs_dir "exp/" \
     --config_path "configs/default.yml" \
     --lr 1e-3 \
     --batch_size 1 \
@@ -7,5 +7,4 @@ CUDA_VISIBLE_DEVICES=7 python train.py --outputs_dir "exp/" \
     --down_sample delaunay \
     --scale 3 \
     --model DRRN \
-    --sample_method random \
-    --ckpt exp/random/DRRN/x_3/best.pth
+    --sample_method FFT

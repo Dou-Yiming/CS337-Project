@@ -5,6 +5,5 @@ imnet_resnet50_scratch/timm_temp/
 checkpoints/
 .idea/*
 **/.ipynb_checkpoints/**
-run.sh
-output/
-weights/
+weights/*
+files/*.txt

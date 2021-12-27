@@ -2,7 +2,6 @@
 OUTPUT_DIR='output/FFT'
 # path to image for visualization
 IMAGE_PATH='files/butterfly.png'
-# IMAGE_PATH='./files/test.png'
 # path to pretrain model
 MODEL_PATH='weights/pretrain_mae_vit_base_mask_0.75_400e.pth'
 
