@@ -9,7 +9,7 @@ Although real-time rendering is emerging, high processing latency, high resource
 
 In this project, two sampling methods are proposed and implemented, and they are defined as **Sparse-Grid Sampling** and **Sparse-Patch Sampling**, which respectively sample the origin images into sparse grids or sparse patches. 
 
-### FFT-based Sampling
+### FFT High-Passing Filter
 
 Specifically, both sampling processes are based on FFT, which is shown in this project to bring excellent down-sampling effect. FFT high-pass filtering is utilized to extract the areas with higher signal frequency (which means more detailed information), and the result is shown in the following figure. (This is the photo of my dog, his name is Rainbow!)
 
