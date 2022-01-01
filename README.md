@@ -1,7 +1,7 @@
 # Image Super-Sampling and Reconstruction from Sparse Samples
 This is the final project of SJTU-CS337-Computer Graphics. 
 
-This doc helps you to get the general idea of the project and run the code. For more details, please refer to our code and this [paper](https://github.com/Dou-Yiming/CS337-Project/blob/main/report/Image Super-Sampling and Reconstruction from Sparse Samples.pdf).
+This doc helps you to get the general idea of the project and run the code. For more details, please refer to our code and this [paper](https://github.com/Dou-Yiming/CS337-Project/blob/main/report/Image%20Super-Sampling%20and%20Reconstruction%20from%20Sparse%20Samples.pdf).
 
 ## Motivation
 
