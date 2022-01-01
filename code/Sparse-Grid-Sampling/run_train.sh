@@ -6,5 +6,5 @@ CUDA_VISIBLE_DEVICES=0 python train.py --outputs_dir "exp/" \
     --num_workers 0 \
     --down_sample delaunay \
     --scale 3 \
-    --model DRRN \
+    --model SRCNN \
     --sample_method FFT
