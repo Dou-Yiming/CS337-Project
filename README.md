@@ -100,7 +100,7 @@ What you need to is follow 2 simple steps:
 
 2. Down-sample HR images to LR images
 
-    Set method and scale of down-sampling process and direction of HR images, then execute the whole script.
+    Set method and scale of down-sampling process and direction of HR images in *HR2LR.ipynb*, then execute the whole script.
 
     ```python
     FFT = True # whether to use FFT-based down-sampling
