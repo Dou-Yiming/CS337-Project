@@ -1,6 +1,6 @@
-/data/*
 /weights/*
 /exp/*
 vis.ipynb
 vis.py
 *.zip
+data/Set5/

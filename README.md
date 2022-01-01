@@ -24,13 +24,17 @@ Next, the Delaunay Triangulation algorithm is performed, which generates triangl
 
 Specifically, the color of each pixel of the LR image is interpolated by the color of each vertex of the triangle, using the barycentric coordinate. The sampling process is shown in the following figure.
 
+<div align=center>
 <img src="figures\image-20211227121201578.png" align="center" width="300" />
+</div>
 
 ### Sparse-Patch Sampling
 
 This method follows the procedure of Vision Transformer (ViT). Each image is split into fixed-size patches. In the next step, the patches that contain more detailed information are sampled. The comparison of random and FFT-based strategies is shown in the following figure (the patches that are not selected are depicted as masks).
 
+<div align=center>
 <img src="figures\image-20211227122027427.png" align="center" width="300" />
+</div>
 
 ## Image Super-Sampling & Reconstruction
 
@@ -40,14 +44,18 @@ For **each** sparse sampling algorithm, a method is designed and implemented in 
 
 For Sparse-Grid Sampling, the Single Image Super-Resolution (SISR) is performed to obtain the HR images. **Three different networks: SRCNN, DRRN and UNet** are tested in this project, and DRRN largely outperforms other methods when it comes to the PSNR results. The comparison of the super-resolution results of each network is shown in the following figures. (10X down-sampling)
 
+<div align=center>
 <img src="figures\image-20211227122720387.png" align="center" width="500" >
+</div>
 
 
 ### Image Reconstruction
 
 In Sparse-Patch Sampling scenario, the newly-proposed **Masked Auto Encoder (MAE)** is used to reconstruct the origin image from the sparse sample patches, and it also has great effect for image sparse-patch sampling reconstruction. In order to compare the reconstruction results, the mask-ratio ranging from 0.1 to 0.9 are adopted. The results of the experiments are shown in the following figures.
 
+<div align=center>
 <img src="figures\image-20211227122651219.png" align="center" width="500" />
+</div>
 
 ## Run the Code
 
