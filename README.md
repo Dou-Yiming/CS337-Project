@@ -1,5 +1,5 @@
 # Image Super-Sampling and Reconstruction from Sparse Samples
-This is the project of SJTU-CS337-Computer Graphics.
+This is the project of SJTU-CS337-Computer Graphics. This doc helps you to 
 
 ## Motivation
 
@@ -11,7 +11,7 @@ In this project, two sampling methods are proposed and implemented, and they are
 
 Specifically, both sampling processes are based on FFT high-pass filtering, which is shown in this project to bring excellent down-sampling effect. FFT high-pass filtering is utilized to extract the areas with higher signal frequency (which means more detailed information), and the result is shown in the following figure. (This is the photo of my dog, his name is Rainbow!)
 
-<img src="figures\image-20211227120911537.png" alt="image-20211227120911537" style="zoom:40%;" />
+<img src="figures\image-20211227120911537.png" align="center" width="300" />
 
 ### Sparse-Grid Sampling
 
@@ -21,13 +21,13 @@ Next, the Delaunay Triangulation algorithm is performed, which generates triangl
 
 Specifically, the color of each pixel of the LR image is interpolated by the color of each vertex of the triangle, using the barycentric coordinate. The sampling process is shown in the following figure.
 
-<img src="figures\image-20211227121201578.png" alt="image-20211227121201578" style="zoom:40%;" />
+<img src="figures\image-20211227121201578.png" align="center" width="300" />
 
 ### Sparse-Patch Sampling
 
 This method follows the procedure of Vision Transformer (ViT). Each image is split into fixed-size patches. In the next step, the patches that contain more detailed information are sampled. The comparison of random and FFT-based strategies is shown in the following figure (the patches that are not selected are depicted as masks).
 
-<img src="figures\image-20211227122027427.png" alt="image-20211227122027427" style="zoom:80%;" />
+<img src="figures\image-20211227122027427.png" align="center" width="300" />
 
 ## Image Super-Sampling & Reconstruction
 
@@ -37,15 +37,40 @@ For **each** sparse sampling algorithm, a method is designed and implemented in 
 
 For Sparse-Grid Sampling, the Single Image Super-Resolution (SISR) is performed to obtain the HR images. **Three different networks: SRCNN, DRRN and UNet** are tested in this project, and DRRN largely outperforms other methods when it comes to the PSNR results. The comparison of the super-resolution results of each network is shown in the following figures. (10X down-sampling)
 
-<img src="figures\image-20211227122720387.png" alt="image-20211227122720387" style="zoom:40%;" />
+<img src="figures\image-20211227122720387.png" align="center" width="500" >
+
 
 ### Image Reconstruction
 
 In Sparse-Patch Sampling scenario, the newly-proposed **Masked Auto Encoder (MAE)** is used to reconstruct the origin image from the sparse sample patches, and it also has great effect for image sparse-patch sampling reconstruction. In order to compare the reconstruction results, the mask-ratio ranging from 0.1 to 0.9 are adopted. The results of the experiments are shown in the following figures.
 
-<img src="figures\image-20211227122651219.png" alt="image-20211227122651219" style="zoom:45%;" />
+<img src="figures\image-20211227122651219.png" align="center" width="500" />
 
-## Supplementary
+## Run the Code
+
+### Setup
+
+#### Install Packages
+
+```shell
+pip install -r requirements.txt
+```
+
+#### Download Datasets
+
+The data used can be downloaded from [here](https://sjtueducn-my.sharepoint.com/:u:/g/personal/douyiming_sjtu_edu_cn/EX3uMrNb-N9AodcI0j5abxsBK4Z1ibzP2ke8AsvCNrGbiA?e=NiRNgr).
+
+Next, extract the data into the corresponding folder:
+
+```shell
+unzip data.zip code/Sparse-Grid-Sampling/
+```
+
+### Train
+
+
+
+### Test
 
 Some of the code used in this project are obtained from the following resources, and their hard work are highly appreciated!
 
