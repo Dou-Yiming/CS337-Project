@@ -44,7 +44,9 @@ For **each** sparse sampling algorithm, a method is designed and implemented in 
 
 ### Single Image Super-Resolution
 
-For Sparse-Grid Sampling, the Single Image Super-Resolution (SISR) is performed to obtain the HR images. **Three different networks: SRCNN, DRRN and UNet** are tested in this project, and DRRN largely outperforms other methods when it comes to the PSNR results. The comparison of the super-resolution results of each network is shown in the following figures. (10X down-sampling)
+For Sparse-Grid Sampling, the Single Image Super-Resolution (SISR) is performed to obtain the HR images. **Three different networks: SRCNN, DRRN and UNet** are tested in this project, and DRRN largely outperforms other methods when it comes to the PSNR results. 
+
+The comparison of the super-resolution results of each network is shown in the following figures. (10X down-sampling)
 
 <div align=center>
 <img src="figures\image-20211227122720387.png"  width="500" >
@@ -53,7 +55,9 @@ For Sparse-Grid Sampling, the Single Image Super-Resolution (SISR) is performed 
 
 ### Image Reconstruction
 
-In Sparse-Patch Sampling scenario, the newly-proposed **Masked Auto Encoder (MAE)** is used to reconstruct the origin image from the sparse sample patches, and it also has great effect for image sparse-patch sampling reconstruction. In order to compare the reconstruction results, the mask-ratio ranging from 0.1 to 0.9 are adopted. The results of the experiments are shown in the following figures.
+In Sparse-Patch Sampling scenario, the newly-proposed **Masked Auto Encoder (MAE)** is used to reconstruct the origin image from the sparse sample patches, and it also has great effect for image sparse-patch sampling reconstruction. 
+
+In order to compare the reconstruction results, the mask-ratio ranging from 0.1 to 0.9 are adopted. The results of the experiments are shown in the following figures.
 
 <div align=center>
 <img src="figures\image-20211227122651219.png"  width="500" />
