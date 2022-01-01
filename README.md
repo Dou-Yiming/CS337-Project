@@ -11,7 +11,10 @@ In this project, two sampling methods are proposed and implemented, and they are
 
 Specifically, both sampling processes are based on FFT high-pass filtering, which is shown in this project to bring excellent down-sampling effect. FFT high-pass filtering is utilized to extract the areas with higher signal frequency (which means more detailed information), and the result is shown in the following figure. (This is the photo of my dog, his name is Rainbow!)
 
-<img src="figures\image-20211227120911537.png" align="center" width="300" />
+<div align=center>
+<img src="figures\image-20211227120911537.png" width="300" />
+</div>
+
 
 ### Sparse-Grid Sampling
 
