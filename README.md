@@ -117,13 +117,6 @@ cd code/Sparse-Grid-Sampling/
 sh run_train.sh
 ```
 
-#### Image Reconstruction
-
-```shell
-cd code/Sparse-Patch-Sampling/
-sh run_pretrain.sh
-```
-
 ### Test
 
 #### Single Image Super Resolution
