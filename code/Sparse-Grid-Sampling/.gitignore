@@ -4,3 +4,6 @@ vis.ipynb
 vis.py
 *.zip
 data/Set5/
+data/union/
+data/delaunay/
+data/dbs/

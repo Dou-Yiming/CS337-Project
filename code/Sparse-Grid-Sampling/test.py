@@ -38,6 +38,7 @@ def parse_args():
     parser.add_argument('--model', type=str, default='DRRN')
     parser.add_argument('--ckpt', type=str, default=None)
     parser.add_argument('--scale', type=int, default=3)
+    parser.add_argument('--test_img', type=str, required=True)
 
     args = parser.parse_args()
     return args
@@ -76,7 +77,7 @@ def main():
     device = set_device()
     torch.manual_seed(args.seed)
     # load data
-    img_path = './data/tmp/10_1.png'
+    img_path = args.test_img
     img = cv2.imread(img_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     tran = transforms.ToTensor()
